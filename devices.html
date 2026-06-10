@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PanelTry — Manage Devices</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #080612;
+      color: #e8e0ff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: #0d0a1a;
+      border: 1px solid #2a1f4a;
+      border-radius: 14px;
+      padding: 28px;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: #a78bfa;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #5a4a7a;
+      margin-bottom: 24px;
+    }
+
+    /* Login form */
+    label {
+      display: block;
+      font-size: 11px;
+      color: #7c6a9a;
+      margin-bottom: 5px;
+    }
+    input {
+      width: 100%;
+      background: #130f22;
+      border: 1px solid #2a1f4a;
+      color: #e8e0ff;
+      border-radius: 7px;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      margin-bottom: 14px;
+      transition: border-color .2s;
+    }
+    input:focus { border-color: #7c3aed; }
+
+    .btn {
+      width: 100%;
+      background: #7c3aed;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn:hover { background: #9155ff; }
+    .btn:disabled { background: #3a2a6a; cursor: not-allowed; }
+
+    /* Error / info messages */
+    .msg {
+      padding: 9px 12px;
+      border-radius: 7px;
+      font-size: 12px;
+      margin-bottom: 14px;
+      display: none;
+    }
+    .msg.error   { background: #2a1010; border: 1px solid #4a1515; color: #f87171; }
+    .msg.success { background: #0f2a1a; border: 1px solid #1d4a30; color: #5dcaa5; }
+    .msg.info    { background: #1a1000; border: 1px solid #4a3a00; color: #fbbf24; }
+
+    /* Device list */
+    #deviceSection { display: none; }
+
+    .device-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .device-header h2 { font-size: 14px; font-weight: 600; color: #e8e0ff; }
+    .slot-badge {
+      font-size: 11px;
+      color: #7c6a9a;
+      background: #1a1530;
+      padding: 3px 9px;
+      border-radius: 20px;
+      border: 1px solid #2a1f4a;
+    }
+    .slot-badge.full { color: #f87171; border-color: #4a1515; background: #2a1010; }
+
+    .device-card {
+      background: #130f22;
+      border: 1px solid #2a1f4a;
+      border-radius: 9px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .device-card.current { border-color: #3d2a7a; background: #160f2a; }
+
+    .device-info { flex: 1; min-width: 0; }
+    .device-name {
+      font-size: 12px;
+      color: #e8e0ff;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .device-meta { font-size: 10px; color: #5a4a7a; margin-top: 3px; }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #2a2040;
+      flex-shrink: 0;
+    }
+    .dot.active { background: #5dcaa5; box-shadow: 0 0 6px #5dcaa580; }
+
+    .logout-btn {
+      font-size: 11px;
+      color: #f87171;
+      background: none;
+      border: 1px solid #4a1515;
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+    .logout-btn:hover { background: #2a1010; }
+    .logout-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .current-tag {
+      font-size: 9px;
+      color: #a78bfa;
+      background: #1a0f3a;
+      border: 1px solid #3d2a7a;
+      border-radius: 3px;
+      padding: 1px 5px;
+      margin-left: 6px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 30px;
+      color: #5a4a7a;
+      font-size: 12px;
+    }
+
+    .key-display {
+      font-size: 11px;
+      color: #5a4a7a;
+      margin-bottom: 18px;
+      padding: 7px 10px;
+      background: #0a0818;
+      border-radius: 6px;
+      border: 1px solid #1a1530;
+      font-family: monospace;
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      font-size: 11px;
+      color: #4a3a6a;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .back-link:hover { color: #a78bfa; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #3a2a6a;
+      border-top-color: #a78bfa;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">PanelTry</div>
+  <div class="subtitle">Device Manager</div>
+
+  <!-- ── LOGIN FORM ── -->
+  <div id="loginSection">
+    <label>Email address</label>
+    <input id="emailInput" type="email" placeholder="you@email.com" />
+
+    <label>License key</label>
+    <input id="keyInput" type="text" placeholder="SK-XXXXXXXXXXXXXXXX"
+      style="font-family:monospace;letter-spacing:1px;" />
+
+    <div id="loginMsg" class="msg"></div>
+
+    <button class="btn" id="loginBtn" onclick="loadDevices()">View My Devices</button>
+  </div>
+
+  <!-- ── DEVICE LIST ── -->
+  <div id="deviceSection">
+    <div id="keyDisplay" class="key-display"></div>
+
+    <div class="device-header">
+      <h2>Active Devices</h2>
+      <span id="slotBadge" class="slot-badge">0 / 2</span>
+    </div>
+
+    <div id="devMsg" class="msg"></div>
+    <div id="deviceList"></div>
+
+    <a class="back-link" onclick="showLogin()">← Use a different key</a>
+  </div>
+</div>
+
+<script>
+  var WORKER_URL = 'https://mute-base-d18b.kushwahaankit9238.workers.dev'; // ← your worker
+
+  var _currentKey   = '';
+  var _currentEmail = '';
+  var _myMid        = '';
+
+  // ── Get machine ID from URL param (passed by auth.js) ──────────────
+  function getMid() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('mid') || '';
+  }
+
+  // ── Auto-fill from URL params (set by auth.js when opening page) ───
+  (function autoFill() {
+    var params = new URLSearchParams(window.location.search);
+    var key   = params.get('key');
+    var email = params.get('email');
+    _myMid    = params.get('mid') || '';
+
+    if (key)   document.getElementById('keyInput').value   = key;
+    if (email) document.getElementById('emailInput').value = email;
+
+    // Auto-load if both present
+    if (key && email) loadDevices();
+  })();
+
+  function showMsg(id, msg, type) {
+    var el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'msg ' + type;
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  function setLoginBtn(loading) {
+    var b = document.getElementById('loginBtn');
+    b.disabled = loading;
+    b.innerHTML = loading
+      ? '<span class="spinner"></span>Loading…'
+      : 'View My Devices';
+  }
+
+  function showLogin() {
+    document.getElementById('loginSection').style.display = 'block';
+    document.getElementById('deviceSection').style.display = 'none';
+    showMsg('loginMsg', '', '');
+  }
+
+  function timeSince(ms) {
+    if (!ms) return 'Never';
+    var diff = Date.now() - ms;
+    var mins = Math.floor(diff / 60000);
+    if (mins < 1)  return 'Just now';
+    if (mins < 60) return mins + ' min ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return hrs + ' hr ago';
+    return Math.floor(hrs / 24) + ' days ago';
+  }
+
+  function renderDevices(devices, limit) {
+    var list  = document.getElementById('deviceList');
+    var badge = document.getElementById('slotBadge');
+
+    badge.textContent = devices.length + ' / ' + limit;
+    badge.className   = 'slot-badge' + (devices.length >= limit ? ' full' : '');
+
+    if (!devices.length) {
+      list.innerHTML = '<div class="empty">No devices activated yet.</div>';
+      return;
+    }
+
+    list.innerHTML = devices.map(function (d) {
+      var isCurrent = _myMid && d.machine_id === _myMid;
+      var isActive  = d.last_seen && (Date.now() - d.last_seen) < 5 * 60 * 1000; // active in last 5min
+
+      return '<div class="device-card' + (isCurrent ? ' current' : '') + '">' +
+        '<div class="dot' + (isActive ? ' active' : '') + '"></div>' +
+        '<div class="device-info">' +
+          '<div class="device-name">' + escHtml(d.device_name || 'Unknown device') +
+            (isCurrent ? '<span class="current-tag">This device</span>' : '') +
+          '</div>' +
+          '<div class="device-meta">' +
+            'Activated: ' + (d.activated_at ? new Date(d.activated_at).toLocaleDateString() : '?') +
+            ' &nbsp;·&nbsp; Last seen: ' + timeSince(d.last_seen) +
+          '</div>' +
+        '</div>' +
+        '<button class="logout-btn" id="logoutBtn_' + d.machine_id + '"' +
+          ' onclick="logoutDevice(\'' + d.machine_id + '\')">' +
+          'Logout' +
+        '</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Load devices ───────────────────────────────────────────────────
+  function loadDevices() {
+    var email = document.getElementById('emailInput').value.trim().toLowerCase();
+    var key   = document.getElementById('keyInput').value.trim().toUpperCase();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showMsg('loginMsg', 'Please enter a valid email address.', 'error'); return;
+    }
+    if (!key || key.length < 5) {
+      showMsg('loginMsg', 'Please enter your license key.', 'error'); return;
+    }
+
+    _currentKey   = key;
+    _currentEmail = email;
+    setLoginBtn(true);
+    showMsg('loginMsg', '', '');
+
+    fetch(WORKER_URL + '/devices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: key, email: email })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        setLoginBtn(false);
+        if (!data.ok) {
+          showMsg('loginMsg', data.error || 'Could not load devices.', 'error');
+          return;
+        }
+
+        // Show device section
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('deviceSection').style.display = 'block';
+        document.getElementById('keyDisplay').textContent =
+          '🔑 ' + key.slice(0, 6) + '••••••••••••' + '  ·  ' + email;
+
+        showMsg('devMsg', '', '');
+        renderDevices(data.devices || [], data.limit || 2);
+      })
+      .catch(function () {
+        setLoginBtn(false);
+        showMsg('loginMsg', 'Network error. Check your internet.', 'error');
+      });
+  }
+
+  // ── Logout a device ────────────────────────────────────────────────
+  function logoutDevice(machine_id) {
+    var btn = document.getElementById('logoutBtn_' + machine_id);
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    showMsg('devMsg', '', '');
+
+    fetch(WORKER_URL + '/logout-device', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        key:        _currentKey,
+        email:      _currentEmail,
+        machine_id: machine_id
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok) {
+          showMsg('devMsg', data.error || 'Could not logout device.', 'error');
+          if (btn) { btn.disabled = false; btn.textContent = 'Logout'; }
+          return;
+        }
+        showMsg('devMsg', 'Device logged out. You can now activate on a new machine.', 'success');
+        // Refresh device list
+        loadDevicesRefresh();
+      })
+      .catch(function () {
+        showMsg('devMsg', 'Network error. Try again.', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Logout'; }
+      });
+  }
+
+  // ── Refresh device list (after logout) ────────────────────────────
+  function loadDevicesRefresh() {
+    fetch(WORKER_URL + '/devices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: _currentKey, email: _currentEmail })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok) renderDevices(data.devices || [], data.limit || 2);
+      })
+      .catch(function () {});
+  }
+
+  // ── Enter key support ──────────────────────────────────────────────
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      var ls = document.getElementById('loginSection');
+      if (ls && ls.style.display !== 'none') loadDevices();
+    }
+  });
+</script>
+</body>
+</html>
